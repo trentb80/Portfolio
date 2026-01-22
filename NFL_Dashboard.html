@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NFL Playoff Analysis Dashboard - Bills @ Broncos</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            color: #333;
+        }
+
+        .dashboard-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+
+        .header h1 {
+            color: #2c3e50;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 700;
+        }
+
+        .header .subtitle {
+            color: #7f8c8d;
+            font-size: 1.2em;
+            margin-bottom: 20px;
+        }
+
+        .matchup-banner {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            margin-top: 20px;
+            padding: 20px;
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            border-radius: 10px;
+        }
+
+        .team-info {
+            text-align: center;
+            color: white;
+        }
+
+        .team-info h2 {
+            font-size: 2em;
+            margin-bottom: 5px;
+        }
+
+        .team-info .record {
+            font-size: 1.5em;
+            font-weight: bold;
+        }
+
+        .vs {
+            font-size: 3em;
+            font-weight: bold;
+            color: white;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0,0,0,0.2);
+        }
+
+        .stat-card h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 1.1em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .stat-value {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #3498db;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            color: #7f8c8d;
+            font-size: 0.9em;
+        }
+
+        .chart-container {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+
+        .chart-container h3 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.3em;
+            text-align: center;
+        }
+
+        .chart-wrapper {
+            position: relative;
+            height: 350px;
+        }
+
+        .charts-row {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 30px;
+            margin-bottom: 30px;
+        }
+
+        .insights-section {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            margin-bottom: 30px;
+        }
+
+        .insights-section h3 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.5em;
+        }
+
+        .insight-item {
+            padding: 15px;
+            margin-bottom: 15px;
+            border-left: 4px solid #3498db;
+            background: #f8f9fa;
+            border-radius: 5px;
+        }
+
+        .insight-item.advantage-broncos {
+            border-left-color: #FF6B35;
+        }
+
+        .insight-item.advantage-bills {
+            border-left-color: #004E89;
+        }
+
+        .insight-item strong {
+            color: #2c3e50;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        .comparison-table th,
+        .comparison-table td {
+            padding: 15px;
+            text-align: center;
+            border-bottom: 1px solid #ecf0f1;
+        }
+
+        .comparison-table th {
+            background: #34495e;
+            color: white;
+            font-weight: 600;
+        }
+
+        .comparison-table tr:hover {
+            background: #f8f9fa;
+        }
+
+        .team-broncos {
+            color: #FF6B35;
+            font-weight: bold;
+        }
+
+        .team-bills {
+            color: #004E89;
+            font-weight: bold;
+        }
+
+        .footer {
+            background: white;
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            text-align: center;
+            color: #7f8c8d;
+        }
+
+        .advantage-badge {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-size: 0.8em;
+            font-weight: bold;
+            margin-left: 10px;
+        }
+
+        .badge-broncos {
+            background: #FF6B35;
+            color: white;
+        }
+
+        .badge-bills {
+            background: #004E89;
+            color: white;
+        }
+
+        @media (max-width: 768px) {
+            .matchup-banner {
+                flex-direction: column;
+            }
+
+            .vs {
+                margin: 20px 0;
+            }
+
+            .charts-row {
+                grid-template-columns: 1fr;
+            }
+
+            .header h1 {
+                font-size: 1.8em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="dashboard-container">
+        <!-- Header Section -->
+        <div class="header">
+            <h1>🏈 NFL PLAYOFF ANALYSIS DASHBOARD</h1>
+            <div class="subtitle">AFC Divisional Round - January 17, 2026</div>
+            
+            <div class="matchup-banner">
+                <div class="team-info">
+                    <h2>Buffalo Bills</h2>
+                    <div class="record">12-5 (70.6%)</div>
+                    <div>Away Team</div>
+                </div>
+                <div class="vs">@</div>
+                <div class="team-info">
+                    <h2>Denver Broncos</h2>
+                    <div class="record">14-3 (82.4%)</div>
+                    <div>Home Team</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Stats Grid -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h3>Venue</h3>
+                <div class="stat-value" style="font-size: 1.8em;">Mile High</div>
+                <div class="stat-label">Empower Field at Mile High</div>
+                <div class="stat-label">Denver, Colorado</div>
+            </div>
+            
+            <div class="stat-card">
+                <h3>Broadcast</h3>
+                <div class="stat-value" style="font-size: 1.8em;">CBS</div>
+                <div class="stat-label">CBS & Paramount+</div>
+                <div class="stat-label">National Coverage</div>
+            </div>
+            
+            <div class="stat-card">
+                <h3>Game Type</h3>
+                <div class="stat-value" style="font-size: 1.6em;">AFC DIV</div>
+                <div class="stat-label">Divisional Playoff</div>
+                <div class="stat-label">Week 2 Postseason</div>
+            </div>
+            
+            <div class="stat-card">
+                <h3>Season</h3>
+                <div class="stat-value">2025</div>
+                <div class="stat-label">Postseason Game</div>
+                <div class="stat-label">Status: Scheduled</div>
+            </div>
+        </div>
+
+        <!-- Charts Row 1 -->
+        <div class="charts-row">
+            <div class="chart-container">
+                <h3>Season Record Comparison</h3>
+                <div class="chart-wrapper">
+                    <canvas id="recordChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <h3>Win Percentage</h3>
+                <div class="chart-wrapper">
+                    <canvas id="winPctChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Row 2 -->
+        <div class="charts-row">
+            <div class="chart-container">
+                <h3>Offensive vs Defensive Performance</h3>
+                <div class="chart-wrapper">
+                    <canvas id="offDefChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <h3>Total Season Points</h3>
+                <div class="chart-wrapper">
+                    <canvas id="totalPointsChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Charts Row 3 -->
+        <div class="charts-row">
+            <div class="chart-container">
+                <h3>Point Differential</h3>
+                <div class="chart-wrapper">
+                    <canvas id="pointDiffChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-container">
+                <h3>Scoring Efficiency</h3>
+                <div class="chart-wrapper">
+                    <canvas id="efficiencyChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Comparison Table -->
+        <div class="chart-container">
+            <h3>Head-to-Head Statistical Comparison</h3>
+            <table class="comparison-table">
+                <thead>
+                    <tr>
+                        <th>Metric</th>
+                        <th class="team-broncos">Denver Broncos</th>
+                        <th class="team-bills">Buffalo Bills</th>
+                        <th>Advantage</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>Record</strong></td>
+                        <td class="team-broncos">14-3</td>
+                        <td class="team-bills">12-5</td>
+                        <td><span class="advantage-badge badge-broncos">Broncos</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Win Percentage</strong></td>
+                        <td class="team-broncos">82.4%</td>
+                        <td class="team-bills">70.6%</td>
+                        <td><span class="advantage-badge badge-broncos">Broncos +11.8%</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Points Per Game (Offense)</strong></td>
+                        <td class="team-broncos">23.6</td>
+                        <td class="team-bills">28.3</td>
+                        <td><span class="advantage-badge badge-bills">Bills +4.7</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Points Allowed Per Game (Defense)</strong></td>
+                        <td class="team-broncos">18.3</td>
+                        <td class="team-bills">21.5</td>
+                        <td><span class="advantage-badge badge-broncos">Broncos -3.2</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Total Points For</strong></td>
+                        <td class="team-broncos">401</td>
+                        <td class="team-bills">481</td>
+                        <td><span class="advantage-badge badge-bills">Bills +80</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Total Points Against</strong></td>
+                        <td class="team-broncos">311</td>
+                        <td class="team-bills">365</td>
+                        <td><span class="advantage-badge badge-broncos">Broncos -54</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Point Differential</strong></td>
+                        <td class="team-broncos">+90</td>
+                        <td class="team-bills">+116</td>
+                        <td><span class="advantage-badge badge-bills">Bills +26</span></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Point Diff Per Game</strong></td>
+                        <td class="team-broncos">+5.3</td>
+                        <td class="team-bills">+6.8</td>
+                        <td><span class="advantage-badge badge-bills">Bills +1.5</span></td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Key Insights Section -->
+        <div class="insights-section">
+            <h3>🔍 Key Insights & Analysis</h3>
+            
+            <div class="insight-item advantage-broncos">
+                <strong>Denver's Defensive Dominance</strong>
+                The Broncos boast an elite defense, allowing just 18.3 points per game - a full 3.2 points fewer than Buffalo. In playoff football, defense wins championships, and Denver's ability to limit scoring could be the difference maker.
+            </div>
+
+            <div class="insight-item advantage-bills">
+                <strong>Buffalo's Offensive Firepower</strong>
+                The Bills' offense is explosive, averaging 28.3 points per game - 4.7 more than Denver. This 20% offensive advantage means Buffalo has the weapons to score on any drive, putting constant pressure on Denver's defense.
+            </div>
+
+            <div class="insight-item advantage-broncos">
+                <strong>Superior Win-Loss Record</strong>
+                Denver's 14-3 record (82.4%) significantly outpaces Buffalo's 12-5 (70.6%). This suggests the Broncos are more consistent winners and perform better in close games, a crucial trait in playoff scenarios.
+            </div>
+
+            <div class="insight-item advantage-bills">
+                <strong>Better Point Differential</strong>
+                Despite fewer wins, Buffalo has a superior point differential (+116 vs +90). This indicates the Bills dominate when they win, potentially suggesting a more explosive, high-ceiling team.
+            </div>
+
+            <div class="insight-item advantage-broncos">
+                <strong>Home Field Advantage</strong>
+                Playing at Mile High Stadium (5,280 feet elevation) in January gives Denver a significant edge. The altitude can affect visiting teams' stamina and conditioning, particularly impacting Buffalo's fast-paced offense.
+            </div>
+
+            <div class="insight-item">
+                <strong>Classic Playoff Matchup: Offense vs. Defense</strong>
+                This game represents the eternal football question: Can an elite offense overcome an elite defense? Buffalo's explosive scoring meets Denver's stifling defense in what promises to be a tactical chess match between contrasting philosophies.
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p><strong>Dashboard Analysis</strong> | NFL 2025 Playoff Season | Data as of January 2026</p>
+            <p style="margin-top: 10px; font-size: 0.9em;">Analysis based on regular season performance statistics</p>
+        </div>
+    </div>
+
+    <script>
+        // Color scheme
+        const broncosColor = '#FF6B35';
+        const billsColor = '#004E89';
+
+        // Chart.js default settings
+        Chart.defaults.font.family = "'Segoe UI', Tahoma, Geneva, Verdana, sans-serif";
+        Chart.defaults.font.size = 13;
+
+        // 1. Record Chart
+        const recordCtx = document.getElementById('recordChart').getContext('2d');
+        new Chart(recordCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Denver Broncos', 'Buffalo Bills'],
+                datasets: [{
+                    label: 'Wins',
+                    data: [14, 12],
+                    backgroundColor: '#2ecc71',
+                    borderColor: '#27ae60',
+                    borderWidth: 2
+                }, {
+                    label: 'Losses',
+                    data: [3, 5],
+                    backgroundColor: '#e74c3c',
+                    borderColor: '#c0392b',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top',
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 20
+                    }
+                }
+            }
+        });
+
+        // 2. Win Percentage Chart
+        const winPctCtx = document.getElementById('winPctChart').getContext('2d');
+        new Chart(winPctCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Denver Broncos', 'Buffalo Bills'],
+                datasets: [{
+                    data: [82.4, 70.6],
+                    backgroundColor: [broncosColor, billsColor],
+                    borderWidth: 3,
+                    borderColor: '#fff'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return context.label + ': ' + context.parsed + '%';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // 3. Offensive vs Defensive Performance
+        const offDefCtx = document.getElementById('offDefChart').getContext('2d');
+        new Chart(offDefCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Denver Broncos', 'Buffalo Bills'],
+                datasets: [{
+                    label: 'Points Per Game (Offense)',
+                    data: [23.6, 28.3],
+                    backgroundColor: '#3498db',
+                    borderColor: '#2980b9',
+                    borderWidth: 2
+                }, {
+                    label: 'Points Allowed Per Game (Defense)',
+                    data: [18.3, 21.5],
+                    backgroundColor: '#e67e22',
+                    borderColor: '#d35400',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 35
+                    }
+                }
+            }
+        });
+
+        // 4. Total Points Chart
+        const totalPointsCtx = document.getElementById('totalPointsChart').getContext('2d');
+        new Chart(totalPointsCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Points Scored', 'Points Allowed'],
+                datasets: [{
+                    label: 'Denver Broncos',
+                    data: [401, 311],
+                    backgroundColor: broncosColor,
+                    borderColor: '#cc5529',
+                    borderWidth: 2
+                }, {
+                    label: 'Buffalo Bills',
+                    data: [481, 365],
+                    backgroundColor: billsColor,
+                    borderColor: '#003a6d',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'top'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 500
+                    }
+                }
+            }
+        });
+
+        // 5. Point Differential Chart
+        const pointDiffCtx = document.getElementById('pointDiffChart').getContext('2d');
+        new Chart(pointDiffCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Denver Broncos', 'Buffalo Bills'],
+                datasets: [{
+                    label: 'Point Differential',
+                    data: [90, 116],
+                    backgroundColor: [broncosColor, billsColor],
+                    borderColor: ['#cc5529', '#003a6d'],
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                indexAxis: 'y',
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        max: 150
+                    }
+                }
+            }
+        });
+
+        // 6. Efficiency Chart (Radar)
+        const efficiencyCtx = document.getElementById('efficiencyChart').getContext('2d');
+        new Chart(efficiencyCtx, {
+            type: 'radar',
+            data: {
+                labels: ['Win %', 'Offensive PPG', 'Defensive PPG', 'Point Diff', 'Consistency'],
+                datasets: [{
+                    label: 'Denver Broncos',
+                    data: [82.4, 78.7, 91.0, 77.6, 85.0],
+                    backgroundColor: 'rgba(255, 107, 53, 0.2)',
+                    borderColor: broncosColor,
+                    borderWidth: 2,
+                    pointBackgroundColor: broncosColor
+                }, {
+                    label: 'Buffalo Bills',
+                    data: [70.6, 94.3, 73.6, 100, 75.0],
+                    backgroundColor: 'rgba(0, 78, 137, 0.2)',
+                    borderColor: billsColor,
+                    borderWidth: 2,
+                    pointBackgroundColor: billsColor
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    r: {
+                        beginAtZero: true,
+                        max: 100
+                    }
+                },
+                plugins: {
+                    legend: {
+                        position: 'top'
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
